@@ -1,0 +1,999 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+
+<head>
+    <meta charset="UTF-8">
+    <!-- PWA关键设置：禁止用户缩放，设置视口 -->
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <!-- PWA应用名称和主题色 -->
+    <meta name="theme-color" content="#1a2a6c">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="图表大师">
+    <meta name="mobile-web-app-capable" content="yes">
+    <meta name="application-name" content="图表大师">
+    <!-- PWA清单文件 -->
+    <link rel="manifest" href="manifest.json">
+    <!-- 苹果设备图标 -->
+    <link rel="apple-touch-icon" href="icons/icon-192x192.png">
+    <!-- 页面标题 -->
+    <title>图表大师认证挑战</title>
+    <!-- 外部资源 -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <style>
+        * {
+            box-sizing: border-box;
+            font-family: 'Arial', 'Microsoft YaHei', sans-serif;
+        }
+
+        body {
+            margin: 0;
+            padding: 0;
+            background: linear-gradient(135deg, #1a2a6c, #2a3a7c, #3a4a8c);
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            color: white;
+            overflow-x: hidden;
+            position: relative;
+            /* 确保内容在安全区域内 */
+            padding-top: env(safe-area-inset-top);
+            padding-bottom: env(safe-area-inset-bottom);
+        }
+
+        body::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background:
+                radial-gradient(circle at 20% 80%, rgba(255, 0, 100, 0.3) 0%, transparent 50%),
+                radial-gradient(circle at 80% 20%, rgba(0, 200, 255, 0.3) 0%, transparent 50%),
+                radial-gradient(circle at 40% 40%, rgba(0, 150, 255, 0.2) 0%, transparent 50%);
+            z-index: -1;
+        }
+
+        .container {
+            width: 90%;
+            max-width: 900px;
+            background: rgba(20, 30, 70, 0.85);
+            border-radius: 20px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5), 0 0 50px rgba(0, 150, 255, 0.3);
+            padding: 30px;
+            margin: 40px 0;
+            position: relative;
+            overflow: hidden;
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(0, 200, 255, 0.3);
+        }
+
+        .container::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 5px;
+            background: linear-gradient(to right, #ff0040, #00c8ff, #ff0040);
+            border-radius: 20px 20px 0 0;
+        }
+
+        header {
+            text-align: center;
+            margin-bottom: 30px;
+        }
+
+        h1 {
+            color: white;
+            margin-bottom: 15px;
+            font-size: 36px;
+            text-shadow: 0 0 10px rgba(255, 255, 255, 0.5);
+            background: linear-gradient(to right, #ff0040, #00c8ff);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            position: relative;
+            display: inline-block;
+        }
+
+        h1::after {
+            content: '';
+            position: absolute;
+            bottom: -10px;
+            left: 10%;
+            width: 80%;
+            height: 3px;
+            background: linear-gradient(to right, transparent, #ff0040, #00c8ff, transparent);
+        }
+
+        .intro {
+            background: rgba(255, 255, 255, 0.1);
+            border-left: 6px solid #00c8ff;
+            padding: 25px;
+            border-radius: 12px;
+            margin-bottom: 30px;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+            backdrop-filter: blur(5px);
+        }
+
+        .intro h2 {
+            color: #00c8ff;
+            margin-top: 0;
+            font-size: 24px;
+            text-shadow: 0 0 10px rgba(0, 200, 255, 0.5);
+        }
+
+        .intro p {
+            font-size: 18px;
+            line-height: 1.6;
+            color: rgba(255, 255, 255, 0.9);
+        }
+
+        .challenges-container {
+            display: block;
+        }
+
+        .challenge {
+            margin-bottom: 35px;
+            padding: 25px;
+            border-radius: 15px;
+            background: rgba(255, 255, 255, 0.05);
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(5px);
+            transition: transform 0.3s;
+        }
+
+        .challenge:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.3);
+        }
+
+        .challenge-title {
+            color: #00c8ff;
+            border-bottom: 2px solid rgba(0, 200, 255, 0.3);
+            padding-bottom: 12px;
+            margin-bottom: 20px;
+            font-size: 22px;
+            display: flex;
+            align-items: center;
+            text-shadow: 0 0 10px rgba(0, 200, 255, 0.5);
+        }
+
+        .challenge-title i {
+            margin-right: 10px;
+            color: #ffcc00;
+        }
+
+        .question {
+            margin-bottom: 15px;
+            padding: 15px;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 10px;
+            font-size: 18px;
+            border-left: 4px solid #ff0040;
+        }
+
+        .question p {
+            margin: 0;
+            line-height: 1.8;
+        }
+
+        .underline {
+            text-decoration: underline;
+            text-decoration-color: #00c8ff;
+            text-decoration-thickness: 2px;
+            padding: 0 5px;
+        }
+
+        .chart-images {
+            display: flex;
+            justify-content: space-between;
+            margin: 20px 0;
+            flex-wrap: wrap;
+        }
+
+        .chart-item {
+            text-align: center;
+            flex: 1;
+            min-width: 150px;
+            margin: 10px;
+        }
+
+        .chart-item img {
+            max-width: 100%;
+            height: 120px;
+            object-fit: contain;
+            border-radius: 10px;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3);
+            transition: transform 0.3s;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+        }
+
+        .chart-item img:hover {
+            transform: scale(1.05);
+            box-shadow: 0 8px 20px rgba(0, 0, 0, 0.4);
+        }
+
+        .chart-name {
+            margin-top: 10px;
+            font-weight: bold;
+            color: #00c8ff;
+            font-size: 16px;
+            text-shadow: 0 0 5px rgba(0, 200, 255, 0.5);
+        }
+
+        .options {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 15px;
+            margin-top: 10px;
+        }
+
+        .option {
+            flex: 1;
+            min-width: 120px;
+        }
+
+        .option label {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 12px 18px;
+            background: rgba(255, 255, 255, 0.1);
+            border: 2px solid rgba(0, 200, 255, 0.3);
+            border-radius: 10px;
+            cursor: pointer;
+            transition: all 0.2s;
+            font-size: 16px;
+            text-align: center;
+        }
+
+        .option input {
+            display: none;
+        }
+
+        .option label:hover {
+            border-color: #00c8ff;
+            background: rgba(0, 200, 255, 0.1);
+            box-shadow: 0 0 10px rgba(0, 200, 255, 0.3);
+        }
+
+        .option input:checked+label {
+            background: rgba(0, 200, 255, 0.2);
+            border-color: #00c8ff;
+            color: #00c8ff;
+            font-weight: bold;
+            box-shadow: 0 0 15px rgba(0, 200, 255, 0.5);
+        }
+
+        .submit-btn {
+            display: block;
+            width: 220px;
+            margin: 40px auto 0;
+            padding: 16px;
+            background: linear-gradient(to right, #ff0040, #00c8ff);
+            color: white;
+            border: none;
+            border-radius: 50px;
+            font-size: 20px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: all 0.3s;
+            box-shadow: 0 6px 20px rgba(255, 0, 64, 0.4);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .submit-btn::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.3), transparent);
+            transition: left 0.5s;
+        }
+
+        .submit-btn:hover::before {
+            left: 100%;
+        }
+
+        .submit-btn:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 8px 25px rgba(255, 0, 64, 0.6);
+        }
+
+        .submit-btn:disabled {
+            background: #666;
+            cursor: not-allowed;
+            transform: none;
+            box-shadow: none;
+        }
+
+        .result {
+            text-align: center;
+            margin-top: 30px;
+            padding: 25px;
+            border-radius: 15px;
+            display: none;
+            animation: fadeIn 0.5s ease-in;
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(5px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+                transform: translateY(20px);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .success {
+            background: rgba(76, 175, 80, 0.2);
+            color: #4CAF50;
+            border: 1px solid rgba(76, 175, 80, 0.5);
+            box-shadow: 0 0 20px rgba(76, 175, 80, 0.3);
+        }
+
+        .failure {
+            background: rgba(244, 67, 54, 0.2);
+            color: #F44336;
+            border: 1px solid rgba(244, 67, 54, 0.5);
+            box-shadow: 0 0 20px rgba(244, 67, 54, 0.3);
+        }
+
+        .success-icon {
+            font-size: 60px;
+            color: #4caf50;
+            margin-bottom: 15px;
+            text-shadow: 0 0 15px rgba(76, 175, 80, 0.7);
+        }
+
+        .master-title {
+            font-size: 36px;
+            font-weight: bold;
+            color: #ffcc00;
+            margin: 20px 0;
+            text-shadow: 0 0 15px rgba(255, 204, 0, 0.7);
+        }
+
+        .big-trophy {
+            font-size: 120px;
+            color: #ffcc00;
+            text-shadow: 0 0 20px rgba(255, 204, 0, 0.7);
+            margin: 20px 0;
+            animation: shine 3s infinite, float 4s ease-in-out infinite;
+        }
+
+        @keyframes shine {
+
+            0%,
+            100% {
+                transform: scale(1);
+                filter: brightness(1);
+            }
+
+            50% {
+                transform: scale(1.05);
+                filter: brightness(1.3);
+            }
+        }
+
+        @keyframes float {
+
+            0%,
+            100% {
+                transform: translateY(0);
+            }
+
+            50% {
+                transform: translateY(-10px);
+            }
+        }
+
+        /* 改进的彩带效果 - 从底部中间炸开 */
+        .confetti {
+            position: fixed;
+            width: 12px;
+            height: 12px;
+            background-color: #f00;
+            bottom: 0;
+            left: 50%;
+            z-index: 1000;
+            border-radius: 0;
+            opacity: 0;
+        }
+
+        .firework {
+            position: fixed;
+            width: 5px;
+            height: 5px;
+            border-radius: 50%;
+            box-shadow: 0 0 10px #fff;
+            z-index: 1000;
+            opacity: 0;
+            bottom: 0;
+            left: 50%;
+        }
+
+        .firework-burst {
+            position: fixed;
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            z-index: 1000;
+            opacity: 0;
+            bottom: 0;
+            left: 50%;
+        }
+
+        /* 添加背景粒子效果 */
+        .particles {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: -1;
+        }
+
+        .particle {
+            position: absolute;
+            width: 2px;
+            height: 2px;
+            background: rgba(255, 255, 255, 0.7);
+            border-radius: 50%;
+            opacity: 0.5;
+            animation: floatParticle 20s infinite linear;
+        }
+
+        @keyframes floatParticle {
+            0% {
+                transform: translateY(100vh) translateX(0);
+                opacity: 0;
+            }
+
+            10% {
+                opacity: 0.7;
+            }
+
+            90% {
+                opacity: 0.7;
+            }
+
+            100% {
+                transform: translateY(-100px) translateX(calc(100vw * var(--random-x)));
+                opacity: 0;
+            }
+        }
+        
+        /* PWA安装提示按钮 */
+        .install-prompt {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            background: linear-gradient(to right, #ff0040, #00c8ff);
+            color: white;
+            border: none;
+            border-radius: 30px;
+            padding: 12px 24px;
+            font-size: 16px;
+            font-weight: bold;
+            cursor: pointer;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3);
+            z-index: 1000;
+            display: none;
+            align-items: center;
+            gap: 10px;
+        }
+        
+        .install-prompt i {
+            font-size: 20px;
+        }
+        
+        .offline-indicator {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            background: #f44336;
+            color: white;
+            text-align: center;
+            padding: 10px;
+            font-size: 14px;
+            z-index: 1001;
+            display: none;
+        }
+    </style>
+</head>
+
+<body>
+    <!-- 离线指示器 -->
+    <div class="offline-indicator" id="offlineIndicator">
+        <i class="fas fa-wifi-slash"></i> 当前处于离线模式，部分功能可能受限
+    </div>
+    
+    <!-- PWA安装提示按钮 -->
+    <button class="install-prompt" id="installPrompt">
+        <i class="fas fa-download"></i> 安装应用
+    </button>
+    
+    <div class="particles" id="particles"></div>
+
+    <div class="container">
+        <div class="challenges-container" id="challengesContainer">
+            <header>
+                <h1>图表大师认证挑战</h1>
+            </header>
+
+            <section class="intro">
+                <h2>恭喜你成功集齐了"图表制作"三大技能！</h2>
+                <p>现在，我们即将迎来最终的"图表大师终极挑战"！通过这最后一关，你将解锁象征着荣誉与实力的【星级图表大师】认证称号！准备好接受挑战了吗？</p>
+            </section>
+
+            <section class="challenge">
+                <h3 class="challenge-title"><i class="fas fa-chart-bar"></i> 挑战一：图表识别</h3>
+                <div class="chart-images">
+                    <div class="chart-item">
+                        <img src="柱形.png" alt="柱形图">
+                        <div class="chart-name">柱形图</div>
+                    </div>
+                    <div class="chart-item">
+                        <img src="折线.png" alt="折线图">
+                        <div class="chart-name">折线图</div>
+                    </div>
+                    <div class="chart-item">
+                        <img src="饼图.png" alt="饼图">
+                        <div class="chart-name">饼图</div>
+                    </div>
+                </div>
+
+                <div class="question">
+                    <p><span class="underline">________</span>像一排排小积木，清楚摆出数据的多少，一眼就能比较谁多谁少</p>
+                    <div class="options">
+                        <div class="option">
+                            <input type="radio" id="q1a" name="q1" value="A">
+                            <label for="q1a">A.柱形图</label>
+                        </div>
+                        <div class="option">
+                            <input type="radio" id="q1b" name="q1" value="B">
+                            <label for="q1b">B.饼图</label>
+                        </div>
+                        <div class="option">
+                            <input type="radio" id="q1c" name="q1" value="C">
+                            <label for="q1c">C.折线图</label>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="question">
+                    <p><span class="underline">________</span>像是描绘数据上下跑动的轨迹，一眼就能看出数据的变化趋势</p>
+                    <div class="options">
+                        <div class="option">
+                            <input type="radio" id="q2a" name="q2" value="A">
+                            <label for="q2a">A.柱形图</label>
+                        </div>
+                        <div class="option">
+                            <input type="radio" id="q2b" name="q2" value="B">
+                            <label for="q2b">B.饼图</label>
+                        </div>
+                        <div class="option">
+                            <input type="radio" id="q2c" name="q2" value="C">
+                            <label for="q2c">C.折线图</label>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="question">
+                    <p><span class="underline">________</span>像是把数据分成一块块"小蛋糕"，一眼就能看出数据与整体间的占比</p>
+                    <div class="options">
+                        <div class="option">
+                            <input type="radio" id="q3a" name="q3" value="A">
+                            <label for="q3a">A.柱形图</label>
+                        </div>
+                        <div class="option">
+                            <input type="radio" id="q3b" name="q3" value="B">
+                            <label for="q3b">B.饼图</label>
+                        </div>
+                        <div class="option">
+                            <input type="radio" id="q3c" name="q3" value="C">
+                            <label for="q3c">C.折线图</label>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <section class="challenge">
+                <h3 class="challenge-title"><i class="fas fa-keyboard"></i> 挑战二：操作技巧</h3>
+                <p>在制作图表中，我可以使用什么键，选择不连续的数据源？</p>
+                <div class="options">
+                    <div class="option">
+                        <input type="radio" id="q4a" name="q4" value="A">
+                        <label for="q4a">A.shift键</label>
+                    </div>
+                    <div class="option">
+                        <input type="radio" id="q4b" name="q4" value="B">
+                        <label for="q4b">B.enter键</label>
+                    </div>
+                    <div class="option">
+                        <input type="radio" id="q4c" name="q4" value="C">
+                        <label for="q4c">C.ctrl键</label>
+                    </div>
+                </div>
+            </section>
+
+            <section class="challenge">
+                <h3 class="challenge-title"><i class="fas fa-running"></i> 挑战三：图表应用</h3>
+                <p>需要观察自己的一周运动变化趋势，我可以选择什么图表？</p>
+                <div class="options">
+                    <div class="option">
+                        <input type="radio" id="q5a" name="q5" value="A">
+                        <label for="q5a">A.柱形图</label>
+                    </div>
+                    <div class="option">
+                        <input type="radio" id="q5b" name="q5" value="B">
+                        <label for="q5b">B.折线图</label>
+                    </div>
+                    <div class="option">
+                        <input type="radio" id="q5c" name="q5" value="C">
+                        <label for="q5c">C.饼图</label>
+                    </div>
+                </div>
+            </section>
+
+            <button class="submit-btn" id="submitBtn">提交挑战</button>
+
+            <div class="result" id="result"></div>
+        </div>
+    </div>
+
+    <script>
+        // Supabase配置 - 阿里云Supabase
+        const supabaseUrl = 'https://sbp-9f7a8g7t19x81ylh.supabase.opentrust.net';
+        const supabaseKey = 'eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJyb2xlIjoiYW5vbiIsInJlZiI6InNicC05ZjdhOGc3dDE5eDgxeWxoIiwiaXNzIjoic3VwYWJhc2UiLCJpYXQiOjE3NjQ2MDE3MDcsImV4cCI6MjA4MDE3NzcwN30.nKAv2jiTA5tLY0_-01DgLRbCQeQ8JQPc14jWGOAEAy4';
+        const supabase = window.supabase.createClient(supabaseUrl, supabaseKey);
+
+        // PWA相关变量
+        let deferredPrompt;
+        const installPrompt = document.getElementById('installPrompt');
+        const offlineIndicator = document.getElementById('offlineIndicator');
+        
+        // 创建背景粒子
+        function createParticles() {
+            const particlesContainer = document.getElementById('particles');
+            for (let i = 0; i < 50; i++) {
+                const particle = document.createElement('div');
+                particle.className = 'particle';
+                particle.style.left = Math.random() * 100 + 'vw';
+                particle.style.setProperty('--random-x', Math.random());
+                particle.style.animationDelay = Math.random() * 20 + 's';
+                particlesContainer.appendChild(particle);
+            }
+        }
+
+        // 提交按钮点击事件
+        document.getElementById('submitBtn').addEventListener('click', async function () {
+            // 获取所有答案
+            const q1 = document.querySelector('input[name="q1"]:checked');
+            const q2 = document.querySelector('input[name="q2"]:checked');
+            const q3 = document.querySelector('input[name="q3"]:checked');
+            const q4 = document.querySelector('input[name="q4"]:checked');
+            const q5 = document.querySelector('input[name="q5"]:checked');
+
+            // 检查是否所有题目都已回答
+            if (!q1 || !q2 || !q3 || !q4 || !q5) {
+                alert('请完成所有挑战后再提交！');
+                return;
+            }
+
+            // 正确答案
+            const correctAnswers = {
+                q1: 'A', // 柱形图
+                q2: 'C', // 折线图
+                q3: 'B', // 饼图
+                q4: 'C', // ctrl键
+                q5: 'B'  // 折线图
+            };
+
+            // 计算得分 - 挑战一的三道小题算作一个挑战
+            let score = 0;
+            let challenge1_score = 0;
+            let challenge2_score = 0;
+            let challenge3_score = 0;
+
+            if (q1.value === correctAnswers.q1 &&
+                q2.value === correctAnswers.q2 &&
+                q3.value === correctAnswers.q3) {
+                score++;
+                challenge1_score = 1;
+            }
+
+            if (q4.value === correctAnswers.q4) {
+                score++;
+                challenge2_score = 1;
+            }
+
+            if (q5.value === correctAnswers.q5) {
+                score++;
+                challenge3_score = 1;
+            }
+
+            // 禁用提交按钮，防止重复提交
+            document.getElementById('submitBtn').disabled = true;
+
+            // 提交数据到Supabase
+            try {
+                const { data, error } = await supabase
+                    .from('student_test')
+                    .insert([
+                        {
+                            challenge1_score: challenge1_score,
+                            challenge2_score: challenge2_score,
+                            challenge3_score: challenge3_score,
+                            total_score: score
+                        }
+                    ]);
+
+                if (error) {
+                    console.error('提交数据失败:', error);
+                } else {
+                    console.log('数据提交成功:', data);
+                }
+            } catch (err) {
+                console.error('提交数据异常:', err);
+            }
+
+            // 显示结果
+            const resultDiv = document.getElementById('result');
+            resultDiv.style.display = 'block';
+
+            if (score === 3) {
+                resultDiv.className = 'result success';
+                resultDiv.innerHTML = `
+                    <div class="big-trophy">
+                        <i class="fas fa-trophy"></i>
+                    </div>
+                    <div class="master-title">星级图表大师</div>
+                    <div class="success-icon">
+                        <i class="fas fa-check-circle"></i>
+                    </div>
+                    <h3>恭喜你！获得【星级图表大师】认证称号！</h3>
+                    <p>你成功完成了所有挑战！</p>
+                `;
+
+                // 添加彩带和烟花效果
+                createConfetti();
+                createFireworks();
+                createBursts();
+            } else {
+                resultDiv.className = 'result failure';
+                resultDiv.innerHTML = `
+                    <h3>再接再厉！</h3>
+                    <p>你完成了 ${score}/3 个挑战，继续努力！</p>
+                `;
+            }
+
+            // 滚动到结果区域
+            resultDiv.scrollIntoView({ behavior: 'smooth' });
+        });
+
+        // 创建彩带效果 - 从底部中间炸开
+        function createConfetti() {
+            const colors = ['#ff0040', '#00c8ff', '#ffcc00', '#4ecdc4', '#6c5ce7', '#fd79a8'];
+
+            for (let i = 0; i < 200; i++) {
+                const confetti = document.createElement('div');
+                confetti.className = 'confetti';
+
+                // 随机颜色
+                const color = colors[Math.floor(Math.random() * colors.length)];
+                confetti.style.backgroundColor = color;
+
+                // 随机大小
+                const size = Math.random() * 12 + 8;
+                confetti.style.width = size + 'px';
+                confetti.style.height = size + 'px';
+
+                // 随机形状
+                if (Math.random() > 0.5) {
+                    confetti.style.borderRadius = '50%';
+                }
+
+                document.body.appendChild(confetti);
+
+                // 使用Web Animations API创建动画 - 从底部中间炸开
+                const angle = Math.random() * Math.PI * 2;
+                const distance = Math.random() * 100 + 50;
+                const tx = Math.cos(angle) * distance;
+                const ty = -Math.sin(angle) * distance - 50;
+
+                const animation = confetti.animate([
+                    { transform: 'translate(0, 0) rotate(0deg)', opacity: 1 },
+                    { transform: `translate(${tx}vw, ${ty}vh) rotate(${Math.random() * 360}deg)`, opacity: 0 }
+                ], {
+                    duration: Math.random() * 2000 + 1500,
+                    easing: 'cubic-bezier(0.1, 0.8, 0.2, 1)'
+                });
+
+                animation.onfinish = () => {
+                    confetti.remove();
+                };
+            }
+        }
+
+        // 创建烟花效果 - 从底部中间炸开
+        function createFireworks() {
+            for (let i = 0; i < 30; i++) {
+                setTimeout(() => {
+                    const firework = document.createElement('div');
+                    firework.className = 'firework';
+
+                    // 随机颜色
+                    const colors = ['#ff0040', '#00c8ff', '#ffcc00', '#6c5ce7', '#fd79a8'];
+                    const color = colors[Math.floor(Math.random() * colors.length)];
+                    firework.style.backgroundColor = color;
+
+                    document.body.appendChild(firework);
+
+                    // 使用Web Animations API创建动画 - 从底部中间炸开
+                    const angle = Math.random() * Math.PI * 2;
+                    const distance = Math.random() * 80 + 40;
+                    const tx = Math.cos(angle) * distance;
+                    const ty = -Math.sin(angle) * distance - 40;
+
+                    const animation = firework.animate([
+                        { transform: 'translate(0, 0)', opacity: 1 },
+                        { transform: `translate(${tx}vw, ${ty}vh)`, opacity: 0 }
+                    ], {
+                        duration: 800,
+                        easing: 'cubic-bezier(0.1, 0.8, 0.2, 1)'
+                    });
+
+                    animation.onfinish = () => {
+                        firework.remove();
+                    };
+                }, i * 100);
+            }
+        }
+
+        // 创建爆发效果 - 从底部中间炸开
+        function createBursts() {
+            for (let i = 0; i < 15; i++) {
+                setTimeout(() => {
+                    const burst = document.createElement('div');
+                    burst.className = 'firework-burst';
+
+                    // 随机颜色
+                    const colors = ['#ff0040', '#00c8ff', '#ffcc00', '#6c5ce7', '#fd79a8'];
+                    const color = colors[Math.floor(Math.random() * colors.length)];
+                    burst.style.backgroundColor = color;
+
+                    document.body.appendChild(burst);
+
+                    // 使用Web Animations API创建动画 - 从底部中间炸开
+                    const angle = Math.random() * Math.PI * 2;
+                    const distance = Math.random() * 60 + 30;
+                    const tx = Math.cos(angle) * distance;
+                    const ty = -Math.sin(angle) * distance - 30;
+
+                    const animation = burst.animate([
+                        { transform: 'translate(0, 0) scale(1)', opacity: 1 },
+                        { transform: `translate(${tx}vw, ${ty}vh) scale(3)`, opacity: 0.7 },
+                        { transform: `translate(${tx * 1.5}vw, ${ty * 1.5}vh) scale(5)`, opacity: 0 }
+                    ], {
+                        duration: 1000,
+                        easing: 'cubic-bezier(0.1, 0.8, 0.2, 1)'
+                    });
+
+                    animation.onfinish = () => {
+                        burst.remove();
+                    };
+                }, i * 200);
+            }
+        }
+        
+        // PWA: 监听安装提示事件
+        window.addEventListener('beforeinstallprompt', (event) => {
+            // 阻止浏览器默认的安装提示
+            event.preventDefault();
+            // 保存事件以便后续触发
+            deferredPrompt = event;
+            // 显示自定义安装按钮
+            installPrompt.style.display = 'flex';
+            
+            console.log('PWA安装提示可用');
+        });
+        
+        // PWA: 点击安装按钮
+        installPrompt.addEventListener('click', async () => {
+            if (!deferredPrompt) return;
+            
+            // 显示安装提示
+            deferredPrompt.prompt();
+            
+            // 等待用户选择
+            const choiceResult = await deferredPrompt.userChoice;
+            
+            if (choiceResult.outcome === 'accepted') {
+                console.log('用户接受了PWA安装');
+            } else {
+                console.log('用户拒绝了PWA安装');
+            }
+            
+            // 重置变量
+            deferredPrompt = null;
+            // 隐藏安装按钮
+            installPrompt.style.display = 'none';
+        });
+        
+        // PWA: 监听应用安装完成
+        window.addEventListener('appinstalled', (event) => {
+            console.log('PWA应用已安装');
+            // 隐藏安装按钮
+            installPrompt.style.display = 'none';
+            
+            // 可选：显示安装成功消息
+            alert('图表大师应用已成功安装到您的设备上！');
+        });
+        
+        // PWA: 监听网络状态变化
+        window.addEventListener('online', () => {
+            console.log('设备已联网');
+            offlineIndicator.style.display = 'none';
+        });
+        
+        window.addEventListener('offline', () => {
+            console.log('设备已离线');
+            offlineIndicator.style.display = 'block';
+        });
+        
+        // 检查初始网络状态
+        if (!navigator.onLine) {
+            offlineIndicator.style.display = 'block';
+        }
+
+        // 初始化背景粒子
+        createParticles();
+        
+        // PWA: 注册Service Worker
+        if ('serviceWorker' in navigator) {
+            window.addEventListener('load', async () => {
+                try {
+                    const registration = await navigator.serviceWorker.register('sw.js');
+                    console.log('Service Worker 注册成功:', registration.scope);
+                    
+                    // 检查更新
+                    registration.addEventListener('updatefound', () => {
+                        const newWorker = registration.installing;
+                        console.log('发现Service Worker更新:', newWorker.state);
+                        
+                        newWorker.addEventListener('statechange', () => {
+                            if (newWorker.state === 'installed' && navigator.serviceWorker.controller) {
+                                console.log('新Service Worker已安装，准备更新');
+                                // 这里可以提示用户刷新页面以应用更新
+                                if (confirm('发现新版本，是否立即刷新页面以应用更新？')) {
+                                    window.location.reload();
+                                }
+                            }
+                        });
+                    });
+                } catch (error) {
+                    console.error('Service Worker 注册失败:', error);
+                }
+            });
+        }
+    </script>
+</body>
+
+</html>
